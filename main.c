@@ -45,13 +45,6 @@ int main(int argc, char *argv[])
         delay = atoi(argv[6]);
     }
 
-    // make connection
-    if (!createConnectedSocket(&server, address, port))
-    {
-        perror("Could not connect to server");
-        return 1;
-    }
-
     // allocate buffer space
     rcvBuffer = calloc(sizeof(char), length);
 
@@ -59,9 +52,18 @@ int main(int argc, char *argv[])
     printf("Starting loop ...\n");
     for (int i = 0; i < count; i++)
     {
+        // make connection
+        if (!createConnectedSocket(&server, address, port))
+        {
+            perror("Could not connect to server");
+            return 1;
+        }
+
         printf("Sending %s to %s ...\n", message, address);
         sendAndListen(server, message, rcvBuffer, length);
         printf("Received %s from %s\n", message, address);
+
+        close(server);
     }
 
     // free buffer
