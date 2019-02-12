@@ -1,3 +1,22 @@
+/*---------------------------------------------------------------------------------------
+--  SOURCE FILE:            main.c
+--
+--  PROGRAM:                echoc.out
+--
+--  FUNCTIONS:              
+--                          void printHelp(const char *programName);
+--
+--  DATE:                   February 11, 2019
+--
+--  REVISIONS:              N/A
+--
+--  DESIGNERS:              Benny Wang
+--
+--  PROGRAMMERS:            Benny Wang
+--
+--  NOTES:
+--                          The main file of the application.
+---------------------------------------------------------------------------------------*/
 #include "main.h"
 
 #include <stdio.h>
@@ -6,6 +25,30 @@
 
 #include "net.h"
 
+/*--------------------------------------------------------------------------------------------------
+-- FUNCTION:                main
+--
+-- DATE:                    February 11, 2018
+--
+-- REVISIONS:               N/A
+--
+-- DESIGNER:                Benny Wang
+--
+-- PROGRAMMER:              Benny Wang
+--
+-- INTERFACE:               int main(int argc, char *argv[])
+--                              argc: The number of command line arguements.
+--                              argv: The command line arguements.
+--
+-- RETURNS:                 0 if the program exits without error, 1 otherwise.
+--
+-- NOTES:
+--                          The entry point of the program as well as the main body. Parses the
+--                          command line arguements extract the required values for sending a TCP
+--                          packet to a server and waits for the echo response. If specified, the
+--                          program will loop through the processes of creating a socket, sending
+--                          a message, wait for a response, and close the socket.
+--------------------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[])
 {
     // network
@@ -72,6 +115,24 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+/*--------------------------------------------------------------------------------------------------
+-- FUNCTION:                printHelp
+--
+-- DATE:                    February 11, 2018
+--
+-- REVISIONS:               N/A
+--
+-- DESIGNER:                Benny Wang
+--
+-- PROGRAMMER:              Benny Wang
+--
+-- INTERFACE:               void printHelp(cosnt char *programName)
+--                              const char *programName: The name of the program a.k.a argv[0].
+--
+-- NOTES:
+--                          Prints a help message when the program is ran with the incorrect command
+--                          line arguements.
+--------------------------------------------------------------------------------------------------*/
 void printHelp(const char *programName)
 {
     printf("Usage: %s address port message length [count] [delay]\n", programName);
