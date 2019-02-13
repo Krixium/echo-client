@@ -29,7 +29,7 @@
 /*--------------------------------------------------------------------------------------------------
 -- FUNCTION:                createConnectedSocket
 --
--- DATE:                    February 11, 2018
+-- DATE:                    February 11, 2019
 --
 -- REVISIONS:               N/A
 --
@@ -86,7 +86,7 @@ int createConnectedSocket(int *sock, const char *address, const short port)
 /*--------------------------------------------------------------------------------------------------
 -- FUNCTION:                sendAndListen
 --
--- DATE:                    February 11, 2018
+-- DATE:                    February 11, 2019
 --
 -- REVISIONS:               N/A
 --
@@ -112,7 +112,7 @@ void sendAndListen(const int sock, const char *message, char *buffer, const unsi
 /*--------------------------------------------------------------------------------------------------
 -- FUNCTION:                readAllFromSocket
 --
--- DATE:                    February 11, 2018
+-- DATE:                    February 11, 2019
 --
 -- REVISIONS:               N/A
 --
