@@ -130,12 +130,13 @@ void sendAndListen(const int sock, const char *message, char *buffer, const unsi
 --------------------------------------------------------------------------------------------------*/
 void readAllFromSocket(const int sock, char *buffer, const unsigned int size)
 {
-    int n = 0;
+    int n = 1;
     char *bufferPointer = buffer;
     unsigned int remaining = size;
 
-    while ((n = recv(sock, bufferPointer, remaining, 0)) < size)
+    while (n > 0 && remaining > 0)
     {
+        n = recv(sock, bufferPointer, remaining, 0);
         bufferPointer += n;
         remaining -= n;
     }

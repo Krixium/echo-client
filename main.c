@@ -104,9 +104,14 @@ int main(int argc, char *argv[])
 
         printf("Sending %s to %s ...\n", message, address);
         sendAndListen(server, message, rcvBuffer, length);
-        printf("Received %s from %s\n", message, address);
+        printf("Received %s from %s\n", rcvBuffer, address);
 
         close(server);
+
+        if (delay > 0)
+        {
+            usleep(delay);
+        }
     }
 
     // free buffer
