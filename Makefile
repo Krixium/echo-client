@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-Wall -ggdb
 NAME=echoc.out
 DEBUGNAME=echoc.out
-LINKS=
+LINKS=-lpthread
 
 default: main.o
 	$(CC) $(CFLAGS) main.o -o $(NAME) $(LINKS)

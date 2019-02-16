@@ -25,7 +25,6 @@
 #include "uwuLib/uwuLib.h"
 #include "uwuLib/uwuLibNet.h"
 
-
 #define UWULIB_IMPL
 #define UWULIBNET_IMPL
 
@@ -58,6 +57,11 @@
 --------------------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[])
 {
+    // book keeping
+    size_t amountSent = 0;
+    size_t numSent = 0;
+    size_t totalDataSent = 0;
+
     // network
     int server;
     char *rcvBuffer;
@@ -116,12 +120,17 @@ int main(int argc, char *argv[])
     for (int i = 0; i < count; i++)
     {
         printf("Sending %s to %s ...\n", message, address);
-        if (write(server, message, length) == 0)
+        amountSent = write(server, message, length);
+        if (amountSent == 0)
         {
             perror("Could not send message");
             return 1;
         }
+        // book keeping
+        numSent++;
+        totalDataSent += amountSent;
 
+        bzero(rcvBuffer, length);
         if (uwuReadAllFromSocket(server, rcvBuffer, length) == 0)
         {
             perror("Nothing was received from server");
@@ -135,10 +144,15 @@ int main(int argc, char *argv[])
         }
     }
 
+    // clean up
     close(server);
-
-    // free buffer
     free(rcvBuffer);
+
+    // Print results
+    printf("Sending finished\n");
+    printf("\tPacket Size: \t %d\n", length);
+    printf("\tPackets Sent: \t %ld\n", numSent);
+    printf("Total Data Sent: \t %ld\n", totalDataSent);
 
     return 0;
 }
