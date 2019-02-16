@@ -21,9 +21,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 
-#include "net.h"
+#include "uwuLib/uwuLib.h"
+#include "uwuLib/uwuLibNet.h"
+
+
+#define UWULIB_IMPL
+#define UWULIBNET_IMPL
+
+#include "uwuLib/uwuLib.h"
+#include "uwuLib/uwuLibNet.h"
 
 /*--------------------------------------------------------------------------------------------------
 -- FUNCTION:                main
@@ -91,28 +98,44 @@ int main(int argc, char *argv[])
     // allocate buffer space
     rcvBuffer = calloc(sizeof(char), length);
 
+    if (rcvBuffer == NULL)
+    {
+        perror("Could not allocate memory.");
+        return 1;
+    }
+
+    // make connection
+    if (!uwuCreateConnectedSocket(&server, address, port))
+    {
+        perror("Could not connect to server");
+        return 1;
+    }
+
     // start echo loop
     printf("Starting loop ...\n");
     for (int i = 0; i < count; i++)
     {
-        // make connection
-        if (!createConnectedSocket(&server, address, port))
+        printf("Sending %s to %s ...\n", message, address);
+        if (write(server, message, length) == 0)
         {
-            perror("Could not connect to server");
+            perror("Could not send message");
             return 1;
         }
 
-        printf("Sending %s to %s ...\n", message, address);
-        sendAndListen(server, message, rcvBuffer, length);
+        if (uwuReadAllFromSocket(server, rcvBuffer, length) == 0)
+        {
+            perror("Nothing was received from server");
+            return 1;
+        }
         printf("Received %s from %s\n", rcvBuffer, address);
-
-        close(server);
 
         if (delay > 0)
         {
             usleep(delay);
         }
     }
+
+    close(server);
 
     // free buffer
     free(rcvBuffer);
