@@ -58,9 +58,13 @@
 int main(int argc, char *argv[])
 {
     // book keeping
+    char filename[256];
+    FILE *logFile;
     size_t amountSent = 0;
     size_t numSent = 0;
     size_t totalDataSent = 0;
+    struct timeval start;
+    struct timeval end;
 
     // network
     int server;
@@ -96,7 +100,15 @@ int main(int argc, char *argv[])
     // get delay if specified
     if (argc == 7)
     {
-        delay = atoi(argv[6]);
+        delay = atoi(argv[6]) * 1000;
+    }
+
+    // open file for logging
+    sprintf(filename, "%s-%d.log", argv[0], getpid());
+    logFile = uwuOpenFile(filename, "w+");
+    if (logFile == NULL)
+    {
+        perror("Could not create log file.");
     }
 
     // allocate buffer space
@@ -119,6 +131,12 @@ int main(int argc, char *argv[])
     printf("Starting loop ...\n");
     for (int i = 0; i < count; i++)
     {
+        if (gettimeofday(&start, NULL))
+        {
+            perror("Getting timestamp failed");
+            return 1;
+        }
+
         printf("Sending %s to %s ...\n", message, address);
         amountSent = write(server, message, length);
         if (amountSent == 0)
@@ -138,6 +156,18 @@ int main(int argc, char *argv[])
         }
         printf("Received %s from %s\n", rcvBuffer, address);
 
+        if (gettimeofday(&end, NULL))
+        {
+            perror("Getting timestamp failed");
+            return 1;
+        }
+
+        if (uwuLogDeltaTimeToFile(logFile, &start, &end) == 0)
+        {
+            perror("Could not write time to file.");
+            return 1;
+        }
+
         if (delay > 0)
         {
             usleep(delay);
@@ -149,10 +179,12 @@ int main(int argc, char *argv[])
     free(rcvBuffer);
 
     // Print results
-    printf("Sending finished\n");
-    printf("\tPacket Size: \t %d\n", length);
-    printf("\tPackets Sent: \t %ld\n", numSent);
-    printf("Total Data Sent: \t %ld\n", totalDataSent);
+    fprintf(logFile, "Sending finished\n");
+    fprintf(logFile, "    Packet Size:        %d\n", length);
+    fprintf(logFile, "    Packets Sent:       %ld\n", numSent);
+    fprintf(logFile, "    Total Data Sent:    %ld\n", totalDataSent);
+
+    uwuCloseFile(&logFile);
 
     return 0;
 }
