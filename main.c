@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
         if (gettimeofday(&start, NULL))
         {
             perror("Getting timestamp failed");
-            return 1;
+            break;
         }
 
         printf("Sending %s to %s ...\n", message, address);
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
         if (amountSent == 0)
         {
             perror("Could not send message");
-            return 1;
+            break;
         }
         // book keeping
         numSent++;
@@ -152,20 +152,20 @@ int main(int argc, char *argv[])
         if (uwuReadAllFromSocket(server, rcvBuffer, length) == 0)
         {
             perror("Nothing was received from server");
-            return 1;
+            break;
         }
         printf("Received %s from %s\n", rcvBuffer, address);
 
         if (gettimeofday(&end, NULL))
         {
             perror("Getting timestamp failed");
-            return 1;
+            break;
         }
 
         if (uwuLogDeltaTimeToFile(logFile, &start, &end) == 0)
         {
             perror("Could not write time to file.");
-            return 1;
+            break;
         }
 
         if (delay > 0)
@@ -178,13 +178,14 @@ int main(int argc, char *argv[])
     close(server);
     free(rcvBuffer);
 
-    // Print results
+    // log results
     fprintf(logFile, "Sending finished\n");
     fprintf(logFile, "    Packet Size:        %d\n", length);
     fprintf(logFile, "    Packets Sent:       %ld\n", numSent);
     fprintf(logFile, "    Total Data Sent:    %ld\n", totalDataSent);
 
-    uwuCloseFile(&logFile);
+    fflush(logFile);
+    fclose(logFile);
 
     return 0;
 }
