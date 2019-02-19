@@ -19,12 +19,6 @@
 ---------------------------------------------------------------------------------------*/
 #include "main.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "uwuLib/uwuLib.h"
-#include "uwuLib/uwuLibNet.h"
-
 #define UWULIB_IMPL
 #define UWULIBNET_IMPL
 
@@ -63,8 +57,12 @@ int main(int argc, char *argv[])
     size_t amountSent = 0;
     size_t numSent = 0;
     size_t totalDataSent = 0;
+    size_t msTotal;
+    size_t usTotal;
     struct timeval start;
     struct timeval end;
+    struct timeval totalStart;
+    struct timeval totalEnd;
 
     // network
     int server;
@@ -108,7 +106,15 @@ int main(int argc, char *argv[])
     logFile = uwuOpenFile(filename, "w+");
     if (logFile == NULL)
     {
-        perror("Could not create log file.");
+        perror("Could not create log file");
+        return 1;
+    }
+
+    // write header to file
+    if (fprintf(logFile, "start(ms),end(ms),delta(ms),amount(B)\n") <= 0)
+    {
+        perror("Could not write to file");
+        return 1;
     }
 
     // allocate buffer space
@@ -129,6 +135,11 @@ int main(int argc, char *argv[])
 
     // start echo loop
     printf("Starting loop ...\n");
+    if (gettimeofday(&totalStart, NULL))
+    {
+        perror("Getting timestamp failed");
+        return 1;
+    }
     for (int i = 0; i < count; i++)
     {
         if (gettimeofday(&start, NULL))
@@ -137,7 +148,6 @@ int main(int argc, char *argv[])
             break;
         }
 
-        printf("Sending %s to %s ...\n", message, address);
         amountSent = write(server, message, length);
         if (amountSent == 0)
         {
@@ -148,13 +158,11 @@ int main(int argc, char *argv[])
         numSent++;
         totalDataSent += amountSent;
 
-        bzero(rcvBuffer, length);
-        if (uwuReadAllFromSocket(server, rcvBuffer, length) == 0)
+        if (uwuReadAllFromSocket(server, rcvBuffer, length) <= 0)
         {
             perror("Nothing was received from server");
             break;
         }
-        printf("Received %s from %s\n", rcvBuffer, address);
 
         if (gettimeofday(&end, NULL))
         {
@@ -162,9 +170,9 @@ int main(int argc, char *argv[])
             break;
         }
 
-        if (uwuLogDeltaTimeToFile(logFile, &start, &end) == 0)
+        if (logStatsToFile(logFile, &start, &end, amountSent) <= 0)
         {
-            perror("Could not write time to file.");
+            perror("Could not write time to file");
             break;
         }
 
@@ -173,6 +181,12 @@ int main(int argc, char *argv[])
             usleep(delay);
         }
     }
+    if (gettimeofday(&totalEnd, NULL))
+    {
+        perror("Getting timestamp failed");
+        return 1;
+    }
+    fprintf(stdout, "Sending finished\n");
 
     // clean up
     close(server);
@@ -183,6 +197,10 @@ int main(int argc, char *argv[])
     fprintf(logFile, "    Packet Size:        %d\n", length);
     fprintf(logFile, "    Packets Sent:       %ld\n", numSent);
     fprintf(logFile, "    Total Data Sent:    %ld\n", totalDataSent);
+    // reusing end variable here because its no longer in use
+    timersub(&totalEnd, &totalStart, &end);
+    convertTime(&msTotal, &usTotal, &end);
+    fprintf(logFile, "    Total Time:         %lu.%03lu\n", msTotal, usTotal);
 
     fflush(logFile);
     fclose(logFile);
@@ -211,4 +229,29 @@ int main(int argc, char *argv[])
 void printHelp(const char *programName)
 {
     printf("Usage: %s address port message length [count] [delay]\n", programName);
+}
+
+void convertTime(size_t *ms, size_t *us, const struct timeval *time)
+{
+    *ms = time->tv_sec * 1000 + time->tv_usec / 1000;
+    *us = time->tv_usec % 1000;
+}
+
+int logStatsToFile(FILE *file, const struct timeval *start, const struct timeval *end, const size_t amount)
+{
+    size_t msStart;
+    size_t usStart;
+    size_t msEnd;
+    size_t usEnd;
+    size_t msDelta;
+    size_t usDelta;
+    struct timeval delta;
+
+    timersub(end, start, &delta);
+
+    convertTime(&msStart, &usStart, start);
+    convertTime(&msEnd, &usEnd, end);
+    convertTime(&msDelta, &usDelta, &delta);
+
+    return fprintf(file, "%lu.%03lu,%lu.%03lu,%lu.%03lu,%lu\n", msStart, usStart, msEnd, usEnd, msDelta, usDelta, amount);
 }
