@@ -55,8 +55,6 @@ int main(int argc, char *argv[])
     char filename[256];
     FILE *logFile;
     size_t amountSent = 0;
-    size_t msTotal;
-    size_t usTotal;
     struct timeval start;
     struct timeval end;
 
@@ -179,9 +177,6 @@ int main(int argc, char *argv[])
     // clean up
     close(server);
     free(rcvBuffer);
-
-    // log results
-    fprintf(logFile, "Sending finished\n");
 
     fflush(logFile);
     fclose(logFile);
