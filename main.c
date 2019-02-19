@@ -55,14 +55,10 @@ int main(int argc, char *argv[])
     char filename[256];
     FILE *logFile;
     size_t amountSent = 0;
-    size_t numSent = 0;
-    size_t totalDataSent = 0;
     size_t msTotal;
     size_t usTotal;
     struct timeval start;
     struct timeval end;
-    struct timeval totalStart;
-    struct timeval totalEnd;
 
     // network
     int server;
@@ -102,7 +98,7 @@ int main(int argc, char *argv[])
     }
 
     // open file for logging
-    sprintf(filename, "%s-%d.log", argv[0], getpid());
+    sprintf(filename, "%s%d.log", argv[0], getpid());
     logFile = uwuOpenFile(filename, "w+");
     if (logFile == NULL)
     {
@@ -134,57 +130,49 @@ int main(int argc, char *argv[])
     }
 
     // start echo loop
-    printf("Starting loop ...\n");
-    if (gettimeofday(&totalStart, NULL))
-    {
-        perror("Getting timestamp failed");
-        return 1;
-    }
     for (int i = 0; i < count; i++)
     {
-        if (gettimeofday(&start, NULL))
-        {
-            perror("Getting timestamp failed");
-            break;
-        }
-
+        // send
         amountSent = write(server, message, length);
         if (amountSent == 0)
         {
             perror("Could not send message");
             break;
         }
-        // book keeping
-        numSent++;
-        totalDataSent += amountSent;
 
+        // start receive timer
+        if (gettimeofday(&start, NULL))
+        {
+            perror("Getting timestamp failed");
+            break;
+        }
+
+        // blocking read
         if (uwuReadAllFromSocket(server, rcvBuffer, length) <= 0)
         {
             perror("Nothing was received from server");
             break;
         }
 
+        // stop receive timer
         if (gettimeofday(&end, NULL))
         {
             perror("Getting timestamp failed");
             break;
         }
 
+        // log
         if (logStatsToFile(logFile, &start, &end, amountSent) <= 0)
         {
             perror("Could not write time to file");
             break;
         }
 
+        // wait if delay is specified
         if (delay > 0)
         {
             usleep(delay);
         }
-    }
-    if (gettimeofday(&totalEnd, NULL))
-    {
-        perror("Getting timestamp failed");
-        return 1;
     }
     fprintf(stdout, "Sending finished\n");
 
@@ -194,13 +182,6 @@ int main(int argc, char *argv[])
 
     // log results
     fprintf(logFile, "Sending finished\n");
-    fprintf(logFile, "    Packet Size:        %d\n", length);
-    fprintf(logFile, "    Packets Sent:       %ld\n", numSent);
-    fprintf(logFile, "    Total Data Sent:    %ld\n", totalDataSent);
-    // reusing end variable here because its no longer in use
-    timersub(&totalEnd, &totalStart, &end);
-    convertTime(&msTotal, &usTotal, &end);
-    fprintf(logFile, "    Total Time:         %lu.%03lu\n", msTotal, usTotal);
 
     fflush(logFile);
     fclose(logFile);
