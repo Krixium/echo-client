@@ -51,6 +51,8 @@
 --------------------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[])
 {
+    int pid = getpid();
+
     // book keeping
     char filename[256];
     FILE *logFile;
@@ -130,6 +132,7 @@ int main(int argc, char *argv[])
     // start echo loop
     for (int i = 0; i < count; i++)
     {
+        fprintf(stdout, "[%d] %d\n", pid, i);
         // send
         amountSent = write(server, message, length);
         if (amountSent == 0)
