@@ -51,8 +51,6 @@
 --------------------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[])
 {
-    int pid = getpid();
-
     // book keeping
     char filename[256];
     FILE *logFile;
@@ -65,6 +63,7 @@ int main(int argc, char *argv[])
     char *rcvBuffer;
 
     // arguements
+    short instances;
     char *address;
     short port;
     char *message;
@@ -73,28 +72,39 @@ int main(int argc, char *argv[])
     unsigned int delay = 0;
 
     // check for wrong arguement count
-    if (argc < 5 || argc > 7)
+    if (argc < 5 || argc > 8)
     {
         printHelp(argv[0]);
         return 0;
     }
 
     // grab required arguements
-    address = argv[1];
-    port = atoi(argv[2]);
-    message = argv[3];
-    length = atoi(argv[4]);
+    instances = atoi(argv[1]);
+    address = argv[2];
+    port = atoi(argv[3]);
+    message = argv[4];
+    length = atoi(argv[5]);
 
     // get count if specified
-    if (argc >= 6)
+    if (argc == 7)
     {
-        count = atoi(argv[5]);
+        count = atoi(argv[6]);
     }
 
     // get delay if specified
-    if (argc == 7)
+    if (argc == 8)
     {
-        delay = atoi(argv[6]) * 1000;
+        count = atoi(argv[6]);
+        delay = atoi(argv[7]) * 1000;
+    }
+
+    // spawn instances - 1 children because parent servers as the last instances
+    for (int i = 0; i < instances - 1; i++)
+    {
+        if (fork() <= 0)
+        {
+            break;
+        }
     }
 
     // open file for logging
@@ -132,7 +142,6 @@ int main(int argc, char *argv[])
     // start echo loop
     for (int i = 0; i < count; i++)
     {
-        fprintf(stdout, "[%d] %d\n", pid, i);
         // send
         amountSent = write(server, message, length);
         if (amountSent == 0)
@@ -207,7 +216,7 @@ int main(int argc, char *argv[])
 --------------------------------------------------------------------------------------------------*/
 void printHelp(const char *programName)
 {
-    printf("Usage: %s address port message length [count] [delay]\n", programName);
+    printf("Usage: %s instances address port message length [count] [delay]\n", programName);
 }
 
 void convertTime(size_t *ms, size_t *us, const struct timeval *time)
