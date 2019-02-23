@@ -19,11 +19,21 @@
 ---------------------------------------------------------------------------------------*/
 #include "main.h"
 
+#include <getopt.h>
+
 #define UWULIB_IMPL
 #define UWULIBNET_IMPL
 
 #include "uwuLib/uwuLib.h"
 #include "uwuLib/uwuLibNet.h"
+
+int instances;
+char *address;
+short port;
+char *message;
+int length;
+int count;
+int delay;
 
 /*--------------------------------------------------------------------------------------------------
 -- FUNCTION:                main
@@ -62,44 +72,10 @@ int main(int argc, char *argv[])
     int server;
     char *rcvBuffer;
 
-    // arguements
-    short instances;
-    char *address;
-    short port;
-    char *message;
-    unsigned int length;
-    unsigned int count = 1;
-    unsigned int delay = 0;
-
-    // check for wrong arguement count
-    if (argc < 5 || argc > 8)
-    {
-        printHelp(argv[0]);
-        return 0;
-    }
-
-    // grab required arguements
-    instances = atoi(argv[1]);
-    address = argv[2];
-    port = atoi(argv[3]);
-    message = argv[4];
-    length = atoi(argv[5]);
-
-    // get count if specified
-    if (argc == 7)
-    {
-        count = atoi(argv[6]);
-    }
-
-    // get delay if specified
-    if (argc == 8)
-    {
-        count = atoi(argv[6]);
-        delay = atoi(argv[7]) * 1000;
-    }
+    parseArguments(argc, argv);
 
     // spawns instances - 1 children, parent handles last instance
-    while (fork() <= 0 && --instances > 1);
+    for (int i = 0; i < instances - 1; i++) if (fork() <= 0) break;
 
     // open file for logging
     sprintf(filename, "%s%d.log", argv[0], getpid());
@@ -110,19 +86,17 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // allocate buffer
+    if ((rcvBuffer = calloc(sizeof(char), length)) == NULL)
+    {
+        perror("Could not allocate memory.");
+        return 1;
+    }
+
     // write header to file
     if (fprintf(logFile, "start(ms),end(ms),delta(ms),amount(B)\n") <= 0)
     {
         perror("Could not write to file");
-        return 1;
-    }
-
-    // allocate buffer space
-    rcvBuffer = calloc(sizeof(char), length);
-
-    if (rcvBuffer == NULL)
-    {
-        perror("Could not allocate memory.");
         return 1;
     }
 
@@ -178,12 +152,10 @@ int main(int argc, char *argv[])
             usleep(delay);
         }
     }
-    fprintf(stdout, "Sending finished\n");
 
-    // clean up
+    fprintf(stdout, "Sending finished\n");
     close(server);
     free(rcvBuffer);
-
     fflush(logFile);
     fclose(logFile);
 
@@ -210,7 +182,77 @@ int main(int argc, char *argv[])
 --------------------------------------------------------------------------------------------------*/
 void printHelp(const char *programName)
 {
-    printf("Usage: %s instances address port message length [count] [delay]\n", programName);
+    fprintf(stderr, "Usage: %s -a [address] -p [port] -m [message] -l [length] -c [count] -d [delay] -n [instances]\n", programName);
+    fprintf(stderr, "    -a - The address of the server.\n");
+    fprintf(stderr, "    -p - The port of the server.\n");
+    fprintf(stderr, "    -m - The message.\n");
+    fprintf(stderr, "    -l - The length of the message - optional, defaults to length of message string.\n");
+    fprintf(stderr, "    -c - The number of times each instance should send the message - optional, defaults to 1.\n");
+    fprintf(stderr, "    -d - The amount of delay between each message in milliseconds - optional, defaults to 0.\n");
+    fprintf(stderr, "    -n - The number of instances - optional, defaults to 1.\n");
+}
+
+void parseArguments(int argc, char *argv[])
+{
+    int c;
+
+    // defaults
+    instances = 1;
+    address = NULL;
+    port = 0;
+    message = NULL;
+    length = 0;
+    count = 1;
+    delay = 0;
+
+    while ((c = getopt(argc, argv, "n:a:p:m:l:c:d:")) != -1)
+    {
+        switch (c)
+        {
+        case 'n':
+            instances = atoi(optarg);
+            break;
+        case 'a':
+            address = optarg;
+            break;
+        case 'p':
+            port = atoi(optarg);
+            break;
+        case 'm':
+            message = optarg;
+            break;
+        case 'l':
+            length = atoi(optarg);
+            break;
+        case 'c':
+            count = atoi(optarg);
+            break;
+        case 'd':
+            delay = atoi(optarg);
+            break;
+        default:
+            printHelp(argv[0]);
+            exit(1);
+        }
+    }
+
+    if (length == 0)
+    {
+        length = strlen(message);
+    }
+
+    if (length < strlen(message))
+    {
+        perror("Length of packet must be greater than length of the message.");
+        exit(1);
+    }
+
+    // check that all options have been given
+    if (instances < 1 || address == NULL || port < 1024 || message == NULL || count < 1 || delay < 0)
+    {
+        printHelp(argv[0]);
+        exit(1);
+    }
 }
 
 void convertTime(size_t *ms, size_t *us, const struct timeval *time)
