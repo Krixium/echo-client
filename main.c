@@ -110,12 +110,11 @@ int main(int argc, char *argv[])
     }
 
     // set timeout
-    if (!setSocketTimeout(30, 0, server))
+    if (!setSocketTimeout(10, 0, server))
     {
         perror("setSocketTimeout");
         return 1;
     }
-
 
     // start echo loop
     for (int i = 0; i < count; i++)
