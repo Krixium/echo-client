@@ -62,7 +62,6 @@ int delay;
 int main(int argc, char *argv[])
 {
     // book keeping
-    int i;
     char filename[256];
     FILE *logFile;
     size_t amountSent = 0;
@@ -76,37 +75,47 @@ int main(int argc, char *argv[])
     parseArguments(argc, argv);
 
     // spawns instances - 1 children, parent handles last instance
-    for (i = 0; i < instances - 1; i++) if (fork() <= 0) break;
+    for (int i = 0; i < instances - 1; i++)
+        if (fork() <= 0)
+            break;
 
     // open file for logging
     sprintf(filename, "%s%d.log", argv[0], getpid());
     logFile = uwuOpenFile(filename, "w+");
     if (logFile == NULL)
     {
-        perror("Could not create log file");
+        perror("uwuOpenFile");
         return 1;
     }
 
     // allocate buffer
     if ((rcvBuffer = calloc(sizeof(char), length)) == NULL)
     {
-        perror("Could not allocate memory.");
+        perror("calloc");
         return 1;
     }
 
     // write header to file
     if (fprintf(logFile, "start(ms),end(ms),delta(ms),amount(B)\n") <= 0)
     {
-        perror("Could not write to file");
+        perror("fprintf");
         return 1;
     }
 
     // make connection
     if (!uwuCreateConnectedSocket(&server, address, port))
     {
-        perror("Could not connect to server");
+        perror("uwuCreateConnectedSocket");
         return 1;
     }
+
+    // set timeout
+    if (!setSocketTimeout(30, 0, server))
+    {
+        perror("setSocketTimeout");
+        return 1;
+    }
+
 
     // start echo loop
     for (int i = 0; i < count; i++)
@@ -115,35 +124,35 @@ int main(int argc, char *argv[])
         amountSent = write(server, message, length);
         if (amountSent == 0)
         {
-            perror("Could not send message");
+            perror("write");
             break;
         }
 
         // start receive timer
         if (gettimeofday(&start, NULL))
         {
-            perror("Getting timestamp failed");
+            perror("gettimeofday");
             break;
         }
 
         // blocking read
         if (uwuReadAllFromSocket(server, rcvBuffer, length) <= 0)
         {
-            perror("Nothing was received from server");
+            perror("uwuReadAllFromSocket");
             break;
         }
 
         // stop receive timer
         if (gettimeofday(&end, NULL))
         {
-            perror("Getting timestamp failed");
+            perror("gettimeofday");
             break;
         }
 
         // log
         if (logStatsToFile(logFile, &start, &end, amountSent) <= 0)
         {
-            perror("Could not write time to file");
+            perror("logStatsToFile");
             break;
         }
 
@@ -154,7 +163,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    fprintf(stdout, "%d Sending finished\n", i);
+    fprintf(stdout, "Sending finished\n");
     close(server);
     free(rcvBuffer);
     fflush(logFile);
@@ -244,7 +253,7 @@ void parseArguments(int argc, char *argv[])
 
     if (length < strlen(message))
     {
-        perror("Length of packet must be greater than length of the message.");
+        fprintf(stderr, "Length of packet must be greater than length of the message.");
         exit(1);
     }
 
@@ -254,6 +263,25 @@ void parseArguments(int argc, char *argv[])
         printHelp(argv[0]);
         exit(1);
     }
+}
+
+int setSocketTimeout(const size_t sec, const size_t usec, const int sock)
+{
+    struct timeval timeout;
+    timeout.tv_sec = sec;
+    timeout.tv_usec = usec;
+
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
+    {
+        return 0;
+    }
+
+    if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0)
+    {
+        return 0;
+    }
+
+    return 1;
 }
 
 void convertTime(size_t *ms, size_t *us, const struct timeval *time)
