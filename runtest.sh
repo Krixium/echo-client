@@ -8,8 +8,8 @@
 # 6: packet count
 # 7: delay
 
-for i in {1..$1}
+for i in $(eval echo {1..$1})
 do
-	echo "spawning $i"
+    echo "spawning $i"
     ~/echo-client/echoc.out $2 $3 $4 $5 $6 $7 &
 done
