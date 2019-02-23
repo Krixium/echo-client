@@ -10,5 +10,6 @@
 
 for i in {1..$1}
 do
+	echo "spawning $i"
     ~/echo-client/echoc.out $2 $3 $4 $5 $6 $7 &
 done
