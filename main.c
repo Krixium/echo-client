@@ -98,14 +98,8 @@ int main(int argc, char *argv[])
         delay = atoi(argv[7]) * 1000;
     }
 
-    // spawn instances - 1 children because parent servers as the last instances
-    for (int i = 0; i < instances - 1; i++)
-    {
-        if (fork() <= 0)
-        {
-            break;
-        }
-    }
+    // spawns instances - 1 children, parent handles last instance
+    while (fork() <= 0 && --instances > 1);
 
     // open file for logging
     sprintf(filename, "%s%d.log", argv[0], getpid());
