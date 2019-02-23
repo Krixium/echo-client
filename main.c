@@ -62,6 +62,7 @@ int delay;
 int main(int argc, char *argv[])
 {
     // book keeping
+    int i;
     char filename[256];
     FILE *logFile;
     size_t amountSent = 0;
@@ -75,7 +76,7 @@ int main(int argc, char *argv[])
     parseArguments(argc, argv);
 
     // spawns instances - 1 children, parent handles last instance
-    for (int i = 0; i < instances - 1; i++) if (fork() <= 0) break;
+    for (i = 0; i < instances - 1; i++) if (fork() <= 0) break;
 
     // open file for logging
     sprintf(filename, "%s%d.log", argv[0], getpid());
@@ -153,7 +154,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    fprintf(stdout, "Sending finished\n");
+    fprintf(stdout, "%d Sending finished\n", i);
     close(server);
     free(rcvBuffer);
     fflush(logFile);
