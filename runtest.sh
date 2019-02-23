@@ -1,13 +1,14 @@
 #!/bin/bash
 
-# 1: host
-# 2: number of instances
+# 1: number of instances
+# 2: host
 # 3: port
-# 4: packet size
-# 5: number messages
-# 6: delay
+# 4: msg
+# 5: packet size
+# 6: packet count
+# 7: delay
 
-for i in {1..$2}
+for i in {1..$1}
 do
-    ./echoc.out $1 $3 asdf $4 $5 $6
+    ./echoc.out $2 $3 $4 $5 $6 $7
 done
