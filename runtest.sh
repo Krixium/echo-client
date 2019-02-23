@@ -10,5 +10,5 @@
 
 for i in {1..$1}
 do
-    ./echoc.out $2 $3 $4 $5 $6 $7
+    ~/echo-client/echoc.out $2 $3 $4 $5 $6 $7 &
 done
