@@ -7,9 +7,6 @@
 # 5: number messages
 # 6: delay
 
-make clean
-make
-
 for i in {1..$2}
 do
     ./echoc.out $1 $3 asdf $4 $5 $6
