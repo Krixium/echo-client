@@ -4,7 +4,11 @@
 --  PROGRAM:                echoc.out
 --
 --  FUNCTIONS:              
---                          void printHelp(const char *programName);
+--                          void printHelp(const char *programName)
+--                          void parseArguments(int argc, char *argv[])
+--                          int setSocketTimeout(const size_t sec, const size_t usec, const int sock)
+--                          void convertTime(size_t *ms, size_t *us, const struct timeval *time)
+--                          int logStatsToFile(FILE *file, const struct timeval *start, const struct timeval *end, const size_t amount)
 --
 --  DATE:                   February 11, 2019
 --
@@ -201,6 +205,24 @@ void printHelp(const char *programName)
     fprintf(stderr, "    -n - The number of instances - optional, defaults to 1.\n");
 }
 
+/*--------------------------------------------------------------------------------------------------
+-- FUNCTION:                parseArguments
+--
+-- DATE:                    February 11, 2019
+--
+-- REVISIONS:               N/A
+--
+-- DESIGNER:                Benny Wang
+--
+-- PROGRAMMER:              Benny Wang
+--
+-- INTERFACE:               void parseArguments(int argc, char *argv[])
+--                              int argc: The number of command line arguments.
+--                              char *argvp[]: The command line arguments.
+--
+-- NOTES:
+--                          Parses the command line arguments and sets the assocatied parameters.
+--------------------------------------------------------------------------------------------------*/
 void parseArguments(int argc, char *argv[])
 {
     int c;
@@ -264,6 +286,26 @@ void parseArguments(int argc, char *argv[])
     }
 }
 
+/*--------------------------------------------------------------------------------------------------
+-- FUNCTION:                setSocketTimeout
+--
+-- DATE:                    February 11, 2019
+--
+-- REVISIONS:               N/A
+--
+-- DESIGNER:                Benny Wang
+--
+-- PROGRAMMER:              Benny Wang
+--
+-- INTERFACE:               int setSocketTimeout
+--                              const size_t sec: The amount of seconds to wait before timing out.
+--                              const size_t sec: The amount of nanosecond to wait before timing out.
+--
+-- RETURN:                  1 if the socket options were set, 0 otherwise.
+--
+-- NOTES:
+--                          Sets the receive timeout and send timeout of a socket.
+--------------------------------------------------------------------------------------------------*/
 int setSocketTimeout(const size_t sec, const size_t usec, const int sock)
 {
     struct timeval timeout;
@@ -283,12 +325,54 @@ int setSocketTimeout(const size_t sec, const size_t usec, const int sock)
     return 1;
 }
 
+/*--------------------------------------------------------------------------------------------------
+-- FUNCTION:                convertTime
+--
+-- DATE:                    February 11, 2019
+--
+-- REVISIONS:               N/A
+--
+-- DESIGNER:                Benny Wang
+--
+-- PROGRAMMER:              Benny Wang
+--
+-- INTERFACE:               void convertTime(size_t *ms, size_t *us, const struct timeval *time)
+--                              size_t *ms: A pointer to store the milliseconds.
+--                              size_t *us: A pointer to store the nanoseconds.
+--                              const struct timeval *time: The time struct to convert.
+--
+-- NOTES:
+--                          Converts a timeval struct to milliseconds.
+--------------------------------------------------------------------------------------------------*/
 void convertTime(size_t *ms, size_t *us, const struct timeval *time)
 {
     *ms = time->tv_sec * 1000 + time->tv_usec / 1000;
     *us = time->tv_usec % 1000;
 }
 
+/*--------------------------------------------------------------------------------------------------
+-- FUNCTION:                logStatsToFile
+--
+-- DATE:                    February 11, 2019
+--
+-- REVISIONS:               N/A
+--
+-- DESIGNER:                Benny Wang
+--
+-- PROGRAMMER:              Benny Wang
+--
+-- INTERFACE:               int logStatsToFile(FILE *file, const struct timeval *start, const struct timeval *end, const size_t amount)
+--                              FILE *file: The log file.
+--                              const struct timeval *start: The start time.
+--                              const struct timeval *end: The stop time.
+--                              const size_t amount: The amount of data.
+--
+-- RETURN:                  The number of bytes written to the log file.
+--
+-- NOTES:
+--                          Logs the stats of a send to the log file. The format of the log is
+--                          startimestamp(ms),endtimestamp(ms),delta(ms),amount(B).
+--------------------------------------------------------------------------------------------------*/
 int logStatsToFile(FILE *file, const struct timeval *start, const struct timeval *end, const size_t amount)
 {
     size_t msStart;

@@ -1,17 +1,21 @@
 CC=gcc
-CFLAGS=-Wall -ggdb
+CFLAGS += -Wall -Werror
 NAME=echoc.out
-DEBUGNAME=echoc.out
 LINKS=-lpthread
 
-default: main.o
-	$(CC) $(CFLAGS) main.o -o $(NAME) $(LINKS)
+SRC := main.c
+OBJ := $(SRC:.c=.o)
 
-debug: main.o
-	$(CC) $(CFLAGS) main.o -ggdb -O0 -o $(DEBUGNAME) $(LINKS)
+.PHONY: default clean
 
-main.o:
-	$(CC) $(CFLAGS) -O -c main.c
+$(NAME): $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LINKS)
+
+debug: $(OBJ)
+	$(CC) $(CFLAGS) -ggdb -o $@ $^ $(LINKS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -o $@ -c $^
 
 clean:
-	rm -f *.o *.txt *.bak *.log $(NAME) $(DEBUGNAME)
+	rm -f *.o *.txt *.log $(NAME) $(DEBUGNAME)
