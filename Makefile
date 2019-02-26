@@ -19,3 +19,6 @@ debug: $(OBJ)
 
 clean:
 	rm -f *.o *.txt *.log $(NAME) $(DEBUGNAME)
+
+count:
+	( find ./ -name '*.log' -print0 | xargs -0 cat ) | wc -l
