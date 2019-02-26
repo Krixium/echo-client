@@ -18,7 +18,10 @@ debug: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ -c $^
 
 clean:
-	rm -f *.o *.txt *.log $(NAME) $(DEBUGNAME)
+	rm -f *.o *.txt *.log $(NAME) $(DEBUGNAME) && rm -rf logs
+
+movelogs:
+	rm -rf logs && mkdir logs && mv *.log logs
 
 count:
 	( find ./ -name '*.log' -print0 | xargs -0 cat ) | wc -l

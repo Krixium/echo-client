@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
             break;
 
     // open file for logging
-    sprintf(filename, "log/%s%d.log", argv[0], getpid());
+    sprintf(filename, "%s%d.log", argv[0], getpid());
     logFile = uwuOpenFile(filename, "w+");
     if (logFile == NULL)
     {
