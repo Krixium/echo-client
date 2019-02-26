@@ -1,6 +1,3 @@
 #!/bin/bash
 
-for file in $(ls | grep .log)
-do
-	wc -l $file
-done
+( find ./ -name '*.log' -print0 | xargs -0 cat ) | wc -l
