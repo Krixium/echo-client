@@ -99,13 +99,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // write header to file
-    if (fprintf(logFile, "start(ms),end(ms),delta(ms),amount(B)\n") <= 0)
-    {
-        perror("fprintf");
-        return 1;
-    }
-
     // make connection
     if (!uwuCreateConnectedSocket(&server, address, port))
     {
@@ -235,6 +228,12 @@ void parseArguments(int argc, char *argv[])
     length = 0;
     count = 1;
     delay = 0;
+
+    if (argc == 1)
+    {
+        printHelp(argv[0]);
+        exit(1);
+    }
 
     while ((c = getopt(argc, argv, "n:a:p:m:l:c:d:")) != -1)
     {
